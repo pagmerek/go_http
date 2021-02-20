@@ -46,11 +46,7 @@ func handleConnection(connection net.Conn, wg *sync.WaitGroup) {
 
 	}
 }
-func main() { 
-	
-"""
-Main function that runs the sever and runs goroutine that accepts connections
-"""
+func main() {
 	fmt.Println("Start server ...")
 	socket, _ := net.Listen("tcp", ":8000")
 	wg := new(sync.WaitGroup)
