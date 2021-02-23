@@ -6,7 +6,7 @@ import (
 	"net"
 )
 
-func main() {
+func tests() {
 	test_coverage := 0
 	conn, err := net.Dial("tcp", ":8000")
 	if err != nil {

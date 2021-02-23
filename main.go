@@ -9,43 +9,50 @@ import (
 	"time"
 )
 
-var words = make(map[string]string)
-
 func handleConnection(connection net.Conn, wg *sync.WaitGroup) {
 	defer wg.Done()
 	fmt.Println("New connection")
+	reader := bufio.NewReader(connection)
+	http_request := make(map[string]string)
+	reply, _ := reader.ReadString('\n')
+	http_request["request"] = reply
 	for {
-		reader := bufio.NewReader(connection)
-		for {
-			reply, err := reader.ReadString('\n')
-			if err != nil {
-				fmt.Println("Connection closed")
-				break
-			}
-			reply += " "
-			request := strings.Split(reply, " ")
-			switch request[0] {
-			case "GET":
-				anwser, ok := words[request[1]]
-				if ok {
-					connection.Write([]byte("ANWSER " + anwser + "\n"))
-				} else {
-					connection.Write([]byte("ERROR can't find " + request[1] + "\n"))
-				}
-			case "SET":
-				words[request[1]] = strings.Join(request[2:], " ")
-				connection.Write([]byte("ADD DEFINITION FOR " + request[1] + "\n"))
-			case "CLEAR":
-				words = make(map[string]string)
-			case "ALL":
-				for k, v := range words {
-					connection.Write([]byte("WORD: " + k + " || DEFINITION: " + v + "\n"))
-				}
-			}
+		reply, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Println("Connection closed")
+			break
 		}
-
+		request := strings.Split(reply, ":")
+		if len(request) > 1 {
+			key, value := request[0], request[1]
+			http_request[key] = value
+		}
 	}
+	fmt.Println(http_request)
+	// switch http_request["request"] {
+	// case "GET":
+	// 	anwser, ok := words[resource]
+	// 	if ok {
+	// 		connection.Write([]byte("ANWSER " + anwser + "\n"))
+	// 	} else {
+	// 		connection.Write([]byte("ERROR can't find " + resource + "\n"))
+	// 	}
+	// case "PUT":
+	// 	connection.Write([]byte("ADD DEFINITION FOR " + http_version + "\n"))
+	// case "HEAD":
+
+	// case "POST":
+
+	// case "DELETE":
+	// 	words = make(map[string]string)
+	// case "OPTIONS":
+
+	// default:
+	// 	fmt.Println("INVALID HTTP METHOD")
+	// }
+
 }
+
 func main() {
 	fmt.Println("Start server ...")
 	socket, _ := net.Listen("tcp", ":8000")
