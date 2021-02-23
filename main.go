@@ -10,28 +10,20 @@ import (
 	"time"
 )
 
-func handleRequest(http_request map[string]string) {
-	// switch http_request["request"] {
-	// case "GET":
-	// 	anwser, ok := words[resource]
-	// 	if ok {
-	// 		connection.Write([]byte("ANWSER " + anwser + "\n"))
-	// 	} else {
-	// 		connection.Write([]byte("ERROR can't find " + resource + "\n"))
-	// 	}
-	// case "PUT":
-	// 	connection.Write([]byte("ADD DEFINITION FOR " + http_version + "\n"))
-	// case "HEAD":
-
-	// case "POST":
-
-	// case "DELETE":
-	// 	words = make(map[string]string)
-	// case "OPTIONS":
-
-	// default:
-	// 	fmt.Println("INVALID HTTP METHOD")
-	// }
+func handleRequest(http_request map[string]string, connection net.Conn) {
+	request := strings.Split(http_request["request"], " ")
+	method, resource, http_version := request[0], request[1], request[2]
+	switch method {
+	case "GET":
+		connection.Write([]byte("ANWSER " + resource + " " + http_version + "\n"))
+	case "PUT":
+	case "HEAD":
+	case "POST":
+	case "DELETE":
+	case "OPTIONS":
+	default:
+		fmt.Println("INVALID HTTP METHOD")
+	}
 }
 
 func handleConnection(connection net.Conn, wg *sync.WaitGroup) {
@@ -53,7 +45,7 @@ func handleConnection(connection net.Conn, wg *sync.WaitGroup) {
 			http_request[key] = value
 		}
 	}
-	handleRequest(http_request)
+	handleRequest(http_request, connection)
 }
 
 func main() {
