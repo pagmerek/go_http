@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"net"
 	"strings"
@@ -9,26 +10,7 @@ import (
 	"time"
 )
 
-func handleConnection(connection net.Conn, wg *sync.WaitGroup) {
-	defer wg.Done()
-	fmt.Println("New connection")
-	reader := bufio.NewReader(connection)
-	http_request := make(map[string]string)
-	reply, _ := reader.ReadString('\n')
-	http_request["request"] = reply
-	for {
-		reply, err := reader.ReadString('\n')
-		if err != nil {
-			fmt.Println("Connection closed")
-			break
-		}
-		request := strings.Split(reply, ":")
-		if len(request) > 1 {
-			key, value := request[0], request[1]
-			http_request[key] = value
-		}
-	}
-	fmt.Println(http_request)
+func handleRequest(http_request map[string]string) {
 	// switch http_request["request"] {
 	// case "GET":
 	// 	anwser, ok := words[resource]
@@ -50,12 +32,35 @@ func handleConnection(connection net.Conn, wg *sync.WaitGroup) {
 	// default:
 	// 	fmt.Println("INVALID HTTP METHOD")
 	// }
+}
 
+func handleConnection(connection net.Conn, wg *sync.WaitGroup) {
+	defer wg.Done()
+	fmt.Println("New connection")
+	reader := bufio.NewReader(connection)
+	http_request := make(map[string]string)
+	reply, _ := reader.ReadString('\n')
+	http_request["request"] = reply
+	for {
+		reply, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Println("Connection closed")
+			break
+		}
+		request := strings.Split(reply, ":")
+		if len(request) > 1 {
+			key, value := request[0], request[1]
+			http_request[key] = value
+		}
+	}
+	handleRequest(http_request)
 }
 
 func main() {
-	fmt.Println("Start server ...")
-	socket, _ := net.Listen("tcp", ":8000")
+	portFlag := flag.String("p", "8000", "Please specify port for HTTP server")
+	flag.Parse()
+	fmt.Println("Starting server on http://127.0.0.1:" + *portFlag)
+	socket, _ := net.Listen("tcp", ":"+*portFlag)
 	wg := new(sync.WaitGroup)
 	wg.Add(1)
 	go func(l net.Listener) {
@@ -68,6 +73,6 @@ func main() {
 			go handleConnection(c, wg)
 		}
 	}(socket)
-	time.Sleep(1 * time.Minute)
+	time.Sleep(time.Minute)
 	wg.Wait()
 }
