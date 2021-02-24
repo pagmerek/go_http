@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"strings"
 	"sync"
@@ -12,10 +13,22 @@ import (
 
 func handleRequest(http_request map[string]string, connection net.Conn) {
 	request := strings.Split(http_request["request"], " ")
+	fmt.Println(request)
 	method, resource, http_version := request[0], request[1], request[2]
 	switch method {
 	case "GET":
+		//var status_code int
 		connection.Write([]byte("ANWSER " + resource + " " + http_version + "\n"))
+		file, err := ioutil.ReadFile("./www/file.go") // For read access.
+		if err != nil {
+			//status_code = 404
+			connection.Write([]byte("HTTP/1.1 404 NOT FOUND"))
+			fmt.Println("404")
+			return
+		}
+		connection.Write([]byte("HTTP/1.1 200 OK"))
+		connection.Write(file)
+
 	case "PUT":
 	case "HEAD":
 	case "POST":
@@ -31,13 +44,12 @@ func handleConnection(connection net.Conn, wg *sync.WaitGroup) {
 	fmt.Println("New connection")
 	reader := bufio.NewReader(connection)
 	http_request := make(map[string]string)
-	reply, _ := reader.ReadString('\n')
+	reply, err := reader.ReadString('\n')
 	http_request["request"] = reply
-	for {
-		reply, err := reader.ReadString('\n')
+	for reply != "\r\n" {
+		reply, err = reader.ReadString('\n')
 		if err != nil {
-			fmt.Println("Connection closed")
-			break
+			return
 		}
 		request := strings.Split(reply, ":")
 		if len(request) > 1 {
@@ -46,6 +58,7 @@ func handleConnection(connection net.Conn, wg *sync.WaitGroup) {
 		}
 	}
 	handleRequest(http_request, connection)
+	fmt.Println("Connection closed")
 }
 func startServer(port string) {
 	fmt.Println("Starting server on http://127.0.0.1:" + port)
