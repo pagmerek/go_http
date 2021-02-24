@@ -47,12 +47,9 @@ func handleConnection(connection net.Conn, wg *sync.WaitGroup) {
 	}
 	handleRequest(http_request, connection)
 }
-
-func main() {
-	portFlag := flag.String("p", "8000", "Please specify port for HTTP server")
-	flag.Parse()
-	fmt.Println("Starting server on http://127.0.0.1:" + *portFlag)
-	socket, _ := net.Listen("tcp", ":"+*portFlag)
+func startServer(port string) {
+	fmt.Println("Starting server on http://127.0.0.1:" + port)
+	connection, _ := net.Listen("tcp", ":"+port)
 	wg := new(sync.WaitGroup)
 	wg.Add(1)
 	go func(l net.Listener) {
@@ -64,7 +61,12 @@ func main() {
 			wg.Add(1)
 			go handleConnection(c, wg)
 		}
-	}(socket)
+	}(connection)
 	time.Sleep(time.Minute)
 	wg.Wait()
+}
+func main() {
+	portFlag := flag.String("p", "8000", "Please specify port for HTTP server")
+	flag.Parse()
+	startServer(*portFlag)
 }
