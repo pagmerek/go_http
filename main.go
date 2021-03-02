@@ -17,16 +17,17 @@ func handleRequest(http_request map[string]string, connection net.Conn) {
 	method, resource, http_version := request[0], request[1], request[2]
 	switch method {
 	case "GET":
-		//var status_code int
-		connection.Write([]byte("ANWSER " + resource + " " + http_version + "\n"))
-		file, err := ioutil.ReadFile("./www/file.go") // For read access.
+
+		file, err := ioutil.ReadFile("www/" + resource)
 		if err != nil {
 			//status_code = 404
-			connection.Write([]byte("HTTP/1.1 404 NOT FOUND"))
+			connection.Write([]byte(http_version + " 404 NOT FOUND"))
 			fmt.Println("404")
 			return
 		}
 		connection.Write([]byte("HTTP/1.1 200 OK"))
+		connection.Write([]byte("\r\n"))
+		fmt.Println(string(file))
 		connection.Write(file)
 
 	case "PUT":
@@ -58,6 +59,7 @@ func handleConnection(connection net.Conn, wg *sync.WaitGroup) {
 		}
 	}
 	handleRequest(http_request, connection)
+	connection.Close()
 	fmt.Println("Connection closed")
 }
 func startServer(port string) {
